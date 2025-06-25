@@ -1,6 +1,6 @@
 GENAIS01: 
 Our respositories are for website tools and associated AI tools. 
-The principle purposes of this project is 2 Fold. (1) Create Website Security Monitoring capability and (2) Add an enhanced SEO capability. 
+The principle purposes of this project are 2 Fold. (1) Create Website Security Monitoring capability and (2) Add an enhanced SEO capability. 
 The GEN-AIS team is moving forward in the development of business related tools servicing the users' needs on the internet:
   * We are owners of Chatgenais.com an AI Interactive Chat tool.
   * We have tools for users to select a Domain and other services found in Gen-ais.org. 
