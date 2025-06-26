@@ -1,0 +1,58 @@
+/**
+ * GEN-AIS Metadata Review Engine
+ * Applies metadata updates conditionally based on platform, plan, and concurrence flag.
+ */
+
+function updateWixMetadata({ title, description, keywords }) {
+  if (typeof wixSEO !== "undefined") {
+    wixSEO.setTitle(title);
+    wixSEO.setDescription(description);
+    wixSEO.setKeywords(keywords);
+    console.log
+
+/**"Metadata updated via Wix Velo"
+  } else {
+    console.warn("❌ wixSEO API not available in this context.");
+  }
+}
+
+function updateNonWixMetadata({ title, description, keywords }) {
+  document.title = title;
+
+  const descTag = document.querySelector('meta[name="description"]');
+  const keywordTag = document.querySelector('meta[name="keywords"]');
+
+  if (descTag) descTag.setAttribute("content", description);
+  if (keywordTag) keywordTag.setAttribute("content", keywords);
+
+  console.log}
+/**"Metadata updated in standard DOM"
+
+
+
+/**
+ * Decision Engine for Metadata Updates
+ */
+function applyMetadataReview({
+  platform,          // 'wix' or 'standard'
+  userPlan,          // 'free', 'pro'
+  requiresConcurrence, // boolean
+  metadata           // { title, description, keywords }
+}) {
+  if (userPlan !== "pro" || !requiresConcurrence) {
+    console.warn(⚠️ Skipping metadata update — user not eligible for auto-apply.");
+    return { status: "pending", reason: "Manual approval required" };
+  }
+
+  if (platform === "wix") {
+    updateWixMetadata(metadata);
+  } else {
+    updateNonWixMetadata(metadata);
+  }
+
+  return { status: "applied", platform };
+}
+
+module.exports = { applyMetadataReview };
+
+

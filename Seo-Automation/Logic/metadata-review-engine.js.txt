@@ -1,0 +1,57 @@
+/**
+ * Metadata Review Engine
+ * Determines how metadata updates are handled based on platform, plan, and concurrence settings
+ */
+
+function updateWixMetadata({ pageTitle, description, keywords }) {
+  // Assumes WIX Velo environment
+  wixSEO.setTitle(pageTitle);
+  wixSEO.setDescription(description);
+  wixSEO.setKeywords(keywords);
+  console.log("✅ WIX metadata updated via Velo API");
+}
+
+function updateStandardMetadata({ pageTitle, description, keywords }) {
+  document.title = pageTitle;
+  const metaDescription = document.querySelector('meta[name="description"]');
+  const metaKeywords = document.querySelector('meta[name="keywords"]');
+
+  if (metaDescription) metaDescription.setAttribute("content", description);
+  if (metaKeywords) metaKeywords.setAttribute("content", keywords);
+
+  console.log("✅ Standard metadata updated in DOM");
+}
+
+function reviewAndApplyMetadata({ platform, userPlan, requiresConcurrence, metadata }) {
+  const shouldApplyDirectly = userPlan === "pro" && requiresConcurrence;
+
+  if (!shouldApplyDirectly) {
+    console.warn("⚠️ Metadata update deferred — awaiting user review or lower-tier plan");
+    return { status: "pending", reason: "user concurrence or plan limitation" };
+  }
+
+  if (platform === "wix") {
+    updateWixMetadata(metadata);
+  } else {
+    updateStandardMetadata(metadata);
+  }
+
+  return { status: "applied", platform };
+}
+
+module.exports = { reviewAndApplyMetadata };
+Example Usage (mock script)
+const { reviewAndApplyMetadata } = require("./metadata-review-engine");
+
+const result = reviewAndApplyMetadata({
+  platform: "wix",
+  userPlan: "pro",
+  requiresConcurrence: true,
+  metadata: {
+    pageTitle: "AI-Generated SEO for Small Biz",
+    description: "Discover how GEN-AIS adapts metadata using AI and real-time insights.",
+    keywords: "AI SEO, GEN-AIS, metadata engine, small business SEO"
+  }
+});
+
+console.log("Update result:", result);
