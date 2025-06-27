@@ -1,58 +1,49 @@
 /**
- * GEN-AIS Metadata Review Engine
- * Applies metadata updates conditionally based on platform, plan, and concurrence flag.
+ * SEO OP Button Handler
+ * Decides whether metadata should apply immediately or be deferred for review.
+ * Used after registration when plan tier and concurrence status are known.
  */
 
-function updateWixMetadata({ title, description, keywords }) {
-  if (typeof wixSEO !== "undefined") {
-    wixSEO.setTitle(title);
-    wixSEO.setDescription(description);
-    wixSEO.setKeywords(keywords);
-    console.log
+function canAutoOverride(user = {}) {
+  const plan = user.plan || "free"; // Default if missing
+  const concurrence = user.concurrenceEnabled === true;
 
-/**"Metadata updated via Wix Velo"
-  } else {
-    console.warn("❌ wixSEO API not available in this context.");
+  if (plan === "pro" && concurrence) {
+    return { allowed: true, mode: "auto" };
   }
+
+  return { allowed: false, mode: "review" };
 }
-
-function updateNonWixMetadata({ title, description, keywords }) {
-  document.title = title;
-
-  const descTag = document.querySelector('meta[name="description"]');
-  const keywordTag = document.querySelector('meta[name="keywords"]');
-
-  if (descTag) descTag.setAttribute("content", description);
-  if (keywordTag) keywordTag.setAttribute("content", keywords);
-
-  console.log}
-/**"Metadata updated in standard DOM"
-
-
 
 /**
- * Decision Engine for Metadata Updates
+ * Called when OP (Override Permission) Button is clicked.
+ * Returns metadata submission status based on user eligibility.
  */
-function applyMetadataReview({
-  platform,          // 'wix' or 'standard'
-  userPlan,          // 'free', 'pro'
-  requiresConcurrence, // boolean
-  metadata           // { title, description, keywords }
-}) {
-  if (userPlan !== "pro" || !requiresConcurrence) {
-    console.warn(⚠️ Skipping metadata update — user not eligible for auto-apply.");
-    return { status: "pending", reason: "Manual approval required" };
+function handleOPButtonClick(userContext, metadataPayload) {
+  const permission = canAutoOverride(userContext);
+
+  if (permission.allowed) {
+    return {
+      status: "applied",
+      message: "✅ Metadata applied automatically (Pro Plan + Concurrence enabled).",
+      metadata: metadataPayload
+    };
   }
 
-  if (platform === "wix") {
-    updateWixMetadata(metadata);
-  } else {
-    updateNonWixMetadata(metadata);
-  }
-
-  return { status: "applied", platform };
+  return {
+    status: "pending",
+    message: "⏳ Metadata update pending — review or approval required.",
+    metadata: metadataPayload
+  };
 }
 
-module.exports = { applyMetadataReview };
+module.exports = { handleOPButtonClick };
 
+-----------------------------
+This file kicks in after the user registers and selects a plan
 
+It relies on user.plan and user.concurrenceEnabled to determine metadata override permissions
+
+You’ll call it from your dashboard interface or Express route handler
+
+Its output can help control button UI state (green if auto, yellow if pending)

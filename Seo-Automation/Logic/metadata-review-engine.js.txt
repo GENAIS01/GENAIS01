@@ -1,57 +1,115 @@
 /**
+ * This the code that determines the Platform and check their WEBSITE Metadata, ask for user concurrence to proceed 
  * Metadata Review Engine
- * Determines how metadata updates are handled based on platform, plan, and concurrence settings
+ * Determines how metadata updates are handled based on platform and concurrence settings
  */
 
-function updateWixMetadata({ pageTitle, description, keywords }) {
-  // Assumes WIX Velo environment
-  wixSEO.setTitle(pageTitle);
-  wixSEO.setDescription(description);
-  wixSEO.setKeywords(keywords);
-  console.log("✅ WIX metadata updated via Velo API");
+/**
+ * GEN-AIS Metadata Review Engine (Pre-Registration)
+ * Applies metadata only if user has provided concurrence.
+ * Platform detection determines Wix vs standard handling.
+ */
+
+function updateWixMetadata({ title, description, keywords }) {
+  if (typeof wixSEO !== "undefined") {
+    wixSEO.setTitle(title);
+    wixSEO.setDescription(description);
+    wixSEO.setKeywords(keywords);
+    console.log("✅ Metadata updated via Wix Velo");
+  } else {
+    console.warn("❌ wixSEO API not available — check platform context.");
+  }
 }
 
-function updateStandardMetadata({ pageTitle, description, keywords }) {
-  document.title = pageTitle;
-  const metaDescription = document.querySelector('meta[name="description"]');
-  const metaKeywords = document.querySelector('meta[name="keywords"]');
+function updateNonWixMetadata({ title, description, keywords }) {
+  document.title = title;
 
-  if (metaDescription) metaDescription.setAttribute("content", description);
-  if (metaKeywords) metaKeywords.setAttribute("content", keywords);
+  const descTag = document.querySelector('meta[name="description"]');
+  const keywordTag = document.querySelector('meta[name="keywords"]');
 
-  console.log("✅ Standard metadata updated in DOM");
+  if (descTag) descTag.setAttribute("content", description);
+  if (keywordTag) keywordTag.setAttribute("content", keywords);
+
+  console.log("✅ Metadata updated in standard DOM");
 }
 
-function reviewAndApplyMetadata({ platform, userPlan, requiresConcurrence, metadata }) {
-  const shouldApplyDirectly = userPlan === "pro" && requiresConcurrence;
-
-  if (!shouldApplyDirectly) {
-    console.warn("⚠️ Metadata update deferred — awaiting user review or lower-tier plan");
-    return { status: "pending", reason: "user concurrence or plan limitation" };
+/**
+ * Applies metadata only if user has provided concurrence
+ * @param {Object} input
+ * @param {'wix'|'standard'} input.platform
+ * @param {Boolean} input.userConcurrence
+ * @param {Object} input.metadata
+ */
+function reviewAndApplyInitialMetadata({ platform, userConcurrence, metadata }) {
+  if (!userConcurrence) {
+    console.warn("🚫 User has not granted concurrence — skipping metadata update.");
+    return { status: "pending", reason: "no concurrence" };
   }
 
   if (platform === "wix") {
     updateWixMetadata(metadata);
   } else {
-    updateStandardMetadata(metadata);
+    updateNonWixMetadata(metadata);
   }
 
   return { status: "applied", platform };
 }
 
-module.exports = { reviewAndApplyMetadata };
-Example Usage (mock script)
-const { reviewAndApplyMetadata } = require("./metadata-review-engine");
+module.exports = { reviewAndApplyInitialMetadata };
 
-const result = reviewAndApplyMetadata({
-  platform: "wix",
-  userPlan: "pro",
-  requiresConcurrence: true,
-  metadata: {
-    pageTitle: "AI-Generated SEO for Small Biz",
-    description: "Discover how GEN-AIS adapts metadata using AI and real-time insights.",
-    keywords: "AI SEO, GEN-AIS, metadata engine, small business SEO"
-  }
-});
 
-console.log("Update result:", result);
+
+----------------------------------------------------------------------------------
+
+This is the first set of code used to get the keyword metadata directly from WIX
+import { fetch } from 'wix-fetch';
+export function getExternalMetadata(url) {
+    return fetch("https://cors-anywhere.herokuapp.com/" + url, { 
+        method: "GET",
+        headers: { "Content-Type": "text/html" }
+    })
+    .then(response => response.text())
+    .then(html => {
+        let parser = new DOMParser();
+        let doc = parser.parseFromString(html, "text/html");
+
+        let title = doc.querySelector("title")?.innerText || "No title found";
+        let description = doc.querySelector('meta[name="description"]')?.content || "No description found";
+        let keywords = doc.querySelector('meta[name="keywords"]')?.content || "No keywords found";
+
+        return { title, description, keywords };
+    })
+    .catch(error => {
+        console.error("Error fetching metadata:", error);
+        return { title: "Error", description: "Error", keywords: "Error" };
+    });
+}
+
+------------------------------------------------------------
+Note: Key Changes Needed for External Websites
+✅ Use fetch with CORS Handling – Many sites block direct metadata fetching for security reasons. ✅ Leverage a Proxy Server – If metadata is restricted, use an API service to retrieve the data. ✅ Ensure HTML Parsing Works Correctly – External sites may have different <meta> tag structures.
+
+Here’s the same metadata retrieval code, but using JavaScript’s built-in fetch() instead of wix-fetch which should work for most websites:
+export function getWebsiteMetadata(url) {
+    return fetch(url, { 
+        method: "GET",
+        headers: { "Content-Type": "text/html" }
+    })
+    .then(response => response.text())
+    .then(html => {
+        let parser = new DOMParser();
+        let doc = parser.parseFromString(html, "text/html");
+
+        let title = doc.querySelector("title")?.innerText || "No title found";
+        let description = doc.querySelector('meta[name="description"]')?.content || "No description found";
+        let keywords = doc.querySelector('meta[name="keywords"]')?.content || "No keywords found";
+
+        return { title, description, keywords };
+    })
+    .catch(error => {
+        console.error("Error fetching metadata:", error);
+        return { title: "Error", description: "Error", keywords: "Error" };
+    });
+}
+
+
